@@ -1098,7 +1098,7 @@
 
 /* Define .init_array/.fini_array sections are available and working. */
 #ifndef USED_FOR_TARGET
-#define HAVE_INITFINI_ARRAY 1
+/* #undef HAVE_INITFINI_ARRAY */
 #endif
 
 
@@ -1672,7 +1672,7 @@
 
 /* The size of `long', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 #endif
 
 
@@ -1690,7 +1690,7 @@
 
 /* The size of `void *', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_VOID_P 4
+#define SIZEOF_VOID_P 8
 #endif
 
 
@@ -1817,7 +1817,7 @@
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #ifndef USED_FOR_TARGET
-#define _FILE_OFFSET_BITS 64
+/* #undef _FILE_OFFSET_BITS */
 #endif
 
 

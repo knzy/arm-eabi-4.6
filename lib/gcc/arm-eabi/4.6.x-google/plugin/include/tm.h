@@ -22,6 +22,7 @@
 # include "config/newlib-stdint.h"
 # include "config/arm/aout.h"
 # include "config/arm/arm.h"
+# include "config/initfini-array.h"
 #endif
 #if defined IN_GCC && !defined GENERATOR_FILE && !defined USED_FOR_TARGET
 # include "insn-flags.h"

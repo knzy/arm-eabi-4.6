@@ -46,9 +46,6 @@ Individual utilities
                                                   resources.
 * windres: (binutils)windres.                   Manipulate Windows resources.
 
-Miscellaneous
-* Bfd: (bfd).                   The Binary File Descriptor library.
-
 Software development
 * Annotate: (annotate).         The obsolete annotation interface.
 * As: (as).                     The GNU assembler.

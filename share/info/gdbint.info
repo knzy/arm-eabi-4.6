@@ -1,5 +1,5 @@
 This is gdbint.info, produced by makeinfo version 4.13 from
-/tmp/android-1596/src/build/../gdb/gdb-7.1.x/gdb/doc/gdbint.texinfo.
+/tmp/android-15472/src/build/../gdb/gdb-7.3.x/gdb/doc/gdbint.texinfo.
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
@@ -7,12 +7,12 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
    Copyright (C) 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010 Free Software
-Foundation, Inc.  Contributed by Cygnus Solutions.  Written by John
-Gilmore.  Second Edition by Stan Shebs.
+2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011 Free
+Software Foundation, Inc.  Contributed by Cygnus Solutions.  Written by
+John Gilmore.  Second Edition by Stan Shebs.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.1 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
 Texts.  A copy of the license is included in the section entitled "GNU
@@ -21,12 +21,12 @@ Free Documentation License".
    This file documents the internals of the GNU debugger GDB.
 
    Copyright (C) 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010 Free Software
-Foundation, Inc.  Contributed by Cygnus Solutions.  Written by John
-Gilmore.  Second Edition by Stan Shebs.
+2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011 Free
+Software Foundation, Inc.  Contributed by Cygnus Solutions.  Written by
+John Gilmore.  Second Edition by Stan Shebs.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.1 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
 Texts.  A copy of the license is included in the section entitled "GNU
@@ -59,7 +59,8 @@ the mechanisms that adapt GDB to specific hosts and targets.
 * Target Vector Definition::
 * Native Debugging::
 * Support Libraries::
-* Coding::
+* Coding Standards::
+* Misc Guidelines::
 * Porting GDB::
 * Versions and Branches::
 * Start of New Year Procedure::
@@ -690,10 +691,6 @@ watchpoints:
      when watchpoints trigger at the instruction following an
      interesting read or write.
 
-`CANNOT_STEP_HW_WATCHPOINTS'
-     If this is defined to a non-zero value, GDB will remove all
-     watchpoints before stepping the inferior.
-
 `STOPPED_BY_WATCHPOINT (WAIT_STATUS)'
      Return non-zero if stopped by a watchpoint.  WAIT_STATUS is of the
      type `struct target_waitstatus', defined by `target.h'.  Normally,
@@ -1158,9 +1155,9 @@ output fields between them.
  -- Function: struct cleanup * make_cleanup_ui_out_tuple_begin_end
           (struct ui_out *UIOUT, const char *ID)
      This function first opens the tuple and then establishes a cleanup
-     (*note Cleanups: Coding.) to close the tuple.  It provides a
-     convenient and correct implementation of the non-portable(1) code
-     sequence:
+     (*note Cleanups: Misc Guidelines.) to close the tuple.  It
+     provides a convenient and correct implementation of the
+     non-portable(1) code sequence:
           struct cleanup *old_cleanup;
           ui_out_tuple_begin (uiout, "...");
           old_cleanup = make_cleanup ((void(*)(void *)) ui_out_tuple_end,
@@ -1182,8 +1179,8 @@ output fields between them.
  -- Function: struct cleanup * make_cleanup_ui_out_list_begin_end
           (struct ui_out *UIOUT, const char *ID)
      Similar to `make_cleanup_ui_out_tuple_begin_end', this function
-     opens a list and then establishes cleanup (*note Cleanups: Coding.)
-     that will close the list.
+     opens a list and then establishes cleanup (*note Cleanups: Misc
+     Guidelines.)  that will close the list.
 
 4.2.4 Item Output Functions
 ---------------------------
@@ -2035,6 +2032,11 @@ on an obstack, and all the psymbols themselves are allocated in a pair
 of large arrays on an obstack, so there is little to be gained by
 trying to free them unless you want to do a lot more work.
 
+   Whether or not psymtabs are created depends on the objfile's symbol
+reader.  The core of GDB hides the details of partial symbols and
+partial symbol tables behind a set of function pointers known as the
+"quick symbol functions".  These are documented in `symfile.h'.
+
 8.3 Types
 =========
 
@@ -2483,20 +2485,6 @@ are:
      Define this if `lseek (n)' does not necessarily move to byte number
      `n' in the file.  This is only used when reading source files.  It
      is normally faster to define `CRLF_SOURCE_FILES' when possible.
-
-`NORETURN'
-     If defined, this should be one or more tokens, such as `volatile',
-     that can be used in both the declaration and definition of
-     functions to indicate that they never return.  The default is
-     already set correctly if compiling with GCC.  This will almost
-     never need to be defined.
-
-`ATTR_NORETURN'
-     If defined, this should be one or more tokens, such as
-     `__attribute__ ((noreturn))', that can be used in the declarations
-     of functions to indicate that they never return.  The default is
-     already set correctly if compiling with GCC.  This will almost
-     never need to be defined.
 
 `lint'
      Define this to help placate `lint' in some situations.
@@ -4964,7 +4952,7 @@ the same.  These macros should be defined (or left undefined) in
 
 
 
-File: gdbint.info,  Node: Support Libraries,  Next: Coding,  Prev: Native Debugging,  Up: Top
+File: gdbint.info,  Node: Support Libraries,  Next: Coding Standards,  Prev: Native Debugging,  Up: Top
 
 15 Support Libraries
 ********************
@@ -5263,15 +5251,236 @@ accessors provided.  They are enumerated here:
 ============
 
 
-File: gdbint.info,  Node: Coding,  Next: Porting GDB,  Prev: Support Libraries,  Up: Top
+File: gdbint.info,  Node: Coding Standards,  Next: Misc Guidelines,  Prev: Support Libraries,  Up: Top
 
-16 Coding
-*********
+16 Coding Standards
+*******************
+
+16.1 GDB C Coding Standards
+===========================
+
+GDB follows the GNU coding standards, as described in
+`etc/standards.texi'.  This file is also available for anonymous FTP
+from GNU archive sites.  GDB takes a strict interpretation of the
+standard; in general, when the GNU standard recommends a practice but
+does not require it, GDB requires it.
+
+   GDB follows an additional set of coding standards specific to GDB,
+as described in the following sections.
+
+16.1.1 ISO C
+------------
+
+GDB assumes an ISO/IEC 9899:1990 (a.k.a. ISO C90) compliant compiler.
+
+   GDB does not assume an ISO C or POSIX compliant C library.
+
+16.1.2 Formatting
+-----------------
+
+The standard GNU recommendations for formatting must be followed
+strictly.  Any GDB-specific deviation from GNU recomendations is
+described below.
+
+   A function declaration should not have its name in column zero.  A
+function definition should have its name in column zero.
+
+     /* Declaration */
+     static void foo (void);
+     /* Definition */
+     void
+     foo (void)
+     {
+     }
+
+   _Pragmatics: This simplifies scripting.  Function definitions can be
+found using `^function-name'._
+
+   There must be a space between a function or macro name and the
+opening parenthesis of its argument list (except for macro definitions,
+as required by C).  There must not be a space after an open
+paren/bracket or before a close paren/bracket.
+
+   While additional whitespace is generally helpful for reading, do not
+use more than one blank line to separate blocks, and avoid adding
+whitespace after the end of a program line (as of 1/99, some 600 lines
+had whitespace after the semicolon).  Excess whitespace causes
+difficulties for `diff' and `patch' utilities.
+
+   Pointers are declared using the traditional K&R C style:
+
+     void *foo;
+
+and not:
+
+     void * foo;
+     void* foo;
+
+   In addition, whitespace around casts and unary operators should
+follow the following guidelines:
+
+Use...         ...instead of  
+`!x'           `! x'          
+`~x'           `~ x'          
+`-x'           `- x'          (unary minus)
+`(foo) x'      `(foo)x'       (cast)
+`*x'           `* x'          (pointer dereference)
+
+16.1.3 Comments
+---------------
+
+The standard GNU requirements on comments must be followed strictly.
+
+   Block comments must appear in the following form, with no `/*'- or
+`*/'-only lines, and no leading `*':
+
+     /* Wait for control to return from inferior to debugger.  If inferior
+        gets a signal, we may decide to start it up again instead of
+        returning.  That is why there is a loop in this function.  When
+        this function actually returns it means the inferior should be left
+        stopped and GDB should read more commands.  */
+
+   (Note that this format is encouraged by Emacs; tabbing for a
+multi-line comment works correctly, and `M-q' fills the block
+consistently.)
+
+   Put a blank line between the block comments preceding function or
+variable definitions, and the definition itself.
+
+   In general, put function-body comments on lines by themselves, rather
+than trying to fit them into the 20 characters left at the end of a
+line, since either the comment or the code will inevitably get longer
+than will fit, and then somebody will have to move it anyhow.
+
+16.1.4 C Usage
+--------------
+
+Code must not depend on the sizes of C data types, the format of the
+host's floating point numbers, the alignment of anything, or the order
+of evaluation of expressions.
+
+   Use functions freely.  There are only a handful of compute-bound
+areas in GDB that might be affected by the overhead of a function call,
+mainly in symbol reading.  Most of GDB's performance is limited by the
+target interface (whether serial line or system call).
+
+   However, use functions with moderation.  A thousand one-line
+functions are just as hard to understand as a single thousand-line
+function.
+
+   _Macros are bad, M'kay._ (But if you have to use a macro, make sure
+that the macro arguments are protected with parentheses.)
+
+   Declarations like `struct foo *' should be used in preference to
+declarations like `typedef struct foo { ... } *foo_ptr'.
+
+16.1.5 Function Prototypes
+--------------------------
+
+Prototypes must be used when both _declaring_ and _defining_ a
+function.  Prototypes for GDB functions must include both the argument
+type and name, with the name matching that used in the actual function
+definition.
+
+   All external functions should have a declaration in a header file
+that callers include, except for `_initialize_*' functions, which must
+be external so that `init.c' construction works, but shouldn't be
+visible to random source files.
+
+   Where a source file needs a forward declaration of a static function,
+that declaration must appear in a block near the top of the source file.
+
+16.1.6 File Names
+-----------------
+
+Any file used when building the core of GDB must be in lower case.  Any
+file used when building the core of GDB must be 8.3 unique.  These
+requirements apply to both source and generated files.
+
+   _Pragmatics: The core of GDB must be buildable on many platforms
+including DJGPP and MacOS/HFS.  Every time an unfriendly file is
+introduced to the build process both `Makefile.in' and `configure.in'
+need to be modified accordingly.  Compare the convoluted conversion
+process needed to transform `COPYING' into `copying.c' with the
+conversion needed to transform `version.in' into `version.c'._
+
+   Any file non 8.3 compliant file (that is not used when building the
+core of GDB) must be added to `gdb/config/djgpp/fnchange.lst'.
+
+   _Pragmatics: This is clearly a compromise._
+
+   When GDB has a local version of a system header file (ex `string.h')
+the file name based on the POSIX header prefixed with `gdb_'
+(`gdb_string.h').  These headers should be relatively independent: they
+should use only macros defined by `configure', the compiler, or the
+host; they should include only system headers; they should refer only
+to system types.  They may be shared between multiple programs, e.g.
+GDB and GDBSERVER.
+
+   For other files `-' is used as the separator.
+
+16.1.7 Include Files
+--------------------
+
+A `.c' file should include `defs.h' first.
+
+   A `.c' file should directly include the `.h' file of every
+declaration and/or definition it directly refers to.  It cannot rely on
+indirect inclusion.
+
+   A `.h' file should directly include the `.h' file of every
+declaration and/or definition it directly refers to.  It cannot rely on
+indirect inclusion.  Exception: The file `defs.h' does not need to be
+directly included.
+
+   An external declaration should only appear in one include file.
+
+   An external declaration should never appear in a `.c' file.
+Exception: a declaration for the `_initialize' function that pacifies
+`-Wmissing-declaration'.
+
+   A `typedef' definition should only appear in one include file.
+
+   An opaque `struct' declaration can appear in multiple `.h' files.
+Where possible, a `.h' file should use an opaque `struct' declaration
+instead of an include.
+
+   All `.h' files should be wrapped in:
+
+     #ifndef INCLUDE_FILE_NAME_H
+     #define INCLUDE_FILE_NAME_H
+     header body
+     #endif
+
+16.2 GDB Python Coding Standards
+================================
+
+GDB follows the published `Python' coding standards in `PEP008'
+(http://www.python.org/dev/peps/pep-0008/).
+
+   In addition, the guidelines in the Google Python Style Guide
+(http://google-styleguide.googlecode.com/svn/trunk/pyguide.html) are
+also followed where they do not conflict with `PEP008'.
+
+16.2.1 GDB-specific exceptions
+------------------------------
+
+There are a few exceptions to the published standards.  They exist
+mainly for consistency with the `C' standards.
+
+   * Use `FIXME' instead of `TODO'.
+
+
+
+File: gdbint.info,  Node: Misc Guidelines,  Next: Porting GDB,  Prev: Coding Standards,  Up: Top
+
+17 Misc Guidelines
+******************
 
 This chapter covers topics that are lower-level than the major
 algorithms of GDB.
 
-16.1 Cleanups
+17.1 Cleanups
 =============
 
 Cleanups are a structured way to deal with things that need to be done
@@ -5359,7 +5568,7 @@ interruption must be on the cleanup chain before you call these
 functions, since they might never return to your code (they `longjmp'
 instead).
 
-16.2 Per-architecture module data
+17.2 Per-architecture module data
 =================================
 
 The multi-arch framework includes a mechanism for adding module
@@ -5450,7 +5659,7 @@ using `post_init'.
        return data->total;
      }
 
-16.3 Wrapping Output Lines
+17.3 Wrapping Output Lines
 ==========================
 
 Output that goes through `printf_filtered' or `fputs_filtered' or
@@ -5474,27 +5683,8 @@ finish by printing a newline, to flush the wrap buffer, before switching
 to unfiltered (`printf') output.  Symbol reading routines that print
 warnings are a good example.
 
-16.4 GDB Coding Standards
-=========================
-
-GDB follows the GNU coding standards, as described in
-`etc/standards.texi'.  This file is also available for anonymous FTP
-from GNU archive sites.  GDB takes a strict interpretation of the
-standard; in general, when the GNU standard recommends a practice but
-does not require it, GDB requires it.
-
-   GDB follows an additional set of coding standards specific to GDB,
-as described in the following sections.
-
-16.4.1 ISO C
-------------
-
-GDB assumes an ISO/IEC 9899:1990 (a.k.a. ISO C90) compliant compiler.
-
-   GDB does not assume an ISO C or POSIX compliant C library.
-
-16.4.2 Memory Management
-------------------------
+17.4 Memory Management
+======================
 
 GDB does not use the functions `malloc', `realloc', `calloc', `free'
 and `asprintf'.
@@ -5530,8 +5720,8 @@ restrict the memory being allocated to no more than a few kilobytes._
    _Pragmatics: `asprintf' and `strdup' can fail.  Print functions such
 as `sprintf' are very prone to buffer overflow errors._
 
-16.4.3 Compiler Warnings
-------------------------
+17.5 Compiler Warnings
+======================
 
 With few exceptions, developers should avoid the configuration option
 `--disable-werror' when building GDB.  The exceptions are listed in the
@@ -5582,112 +5772,8 @@ those flags are treated as errors.
      currently too noisy to enable with `-Werror'.
 
 
-16.4.4 Formatting
------------------
-
-The standard GNU recommendations for formatting must be followed
-strictly.
-
-   A function declaration should not have its name in column zero.  A
-function definition should have its name in column zero.
-
-     /* Declaration */
-     static void foo (void);
-     /* Definition */
-     void
-     foo (void)
-     {
-     }
-
-   _Pragmatics: This simplifies scripting.  Function definitions can be
-found using `^function-name'._
-
-   There must be a space between a function or macro name and the
-opening parenthesis of its argument list (except for macro definitions,
-as required by C).  There must not be a space after an open
-paren/bracket or before a close paren/bracket.
-
-   While additional whitespace is generally helpful for reading, do not
-use more than one blank line to separate blocks, and avoid adding
-whitespace after the end of a program line (as of 1/99, some 600 lines
-had whitespace after the semicolon).  Excess whitespace causes
-difficulties for `diff' and `patch' utilities.
-
-   Pointers are declared using the traditional K&R C style:
-
-     void *foo;
-
-and not:
-
-     void * foo;
-     void* foo;
-
-16.4.5 Comments
----------------
-
-The standard GNU requirements on comments must be followed strictly.
-
-   Block comments must appear in the following form, with no `/*'- or
-`*/'-only lines, and no leading `*':
-
-     /* Wait for control to return from inferior to debugger.  If inferior
-        gets a signal, we may decide to start it up again instead of
-        returning.  That is why there is a loop in this function.  When
-        this function actually returns it means the inferior should be left
-        stopped and GDB should read more commands.  */
-
-   (Note that this format is encouraged by Emacs; tabbing for a
-multi-line comment works correctly, and `M-q' fills the block
-consistently.)
-
-   Put a blank line between the block comments preceding function or
-variable definitions, and the definition itself.
-
-   In general, put function-body comments on lines by themselves, rather
-than trying to fit them into the 20 characters left at the end of a
-line, since either the comment or the code will inevitably get longer
-than will fit, and then somebody will have to move it anyhow.
-
-16.4.6 C Usage
---------------
-
-Code must not depend on the sizes of C data types, the format of the
-host's floating point numbers, the alignment of anything, or the order
-of evaluation of expressions.
-
-   Use functions freely.  There are only a handful of compute-bound
-areas in GDB that might be affected by the overhead of a function call,
-mainly in symbol reading.  Most of GDB's performance is limited by the
-target interface (whether serial line or system call).
-
-   However, use functions with moderation.  A thousand one-line
-functions are just as hard to understand as a single thousand-line
-function.
-
-   _Macros are bad, M'kay._ (But if you have to use a macro, make sure
-that the macro arguments are protected with parentheses.)
-
-   Declarations like `struct foo *' should be used in preference to
-declarations like `typedef struct foo { ... } *foo_ptr'.
-
-16.4.7 Function Prototypes
---------------------------
-
-Prototypes must be used when both _declaring_ and _defining_ a
-function.  Prototypes for GDB functions must include both the argument
-type and name, with the name matching that used in the actual function
-definition.
-
-   All external functions should have a declaration in a header file
-that callers include, except for `_initialize_*' functions, which must
-be external so that `init.c' construction works, but shouldn't be
-visible to random source files.
-
-   Where a source file needs a forward declaration of a static function,
-that declaration must appear in a block near the top of the source file.
-
-16.4.8 Internal Error Recovery
-------------------------------
+17.6 Internal Error Recovery
+============================
 
 During its execution, GDB can encounter two types of errors.  User
 errors and internal errors.  User errors include not only a user
@@ -5706,70 +5792,13 @@ code detected a user error, recovered from it and issued a `warning' or
 the code failed to correctly recover from the user error and issued an
 `internal_error'._
 
-16.4.9 File Names
------------------
+17.7 Command Names
+==================
 
-Any file used when building the core of GDB must be in lower case.  Any
-file used when building the core of GDB must be 8.3 unique.  These
-requirements apply to both source and generated files.
+GDB U/I commands are written `foo-bar', not `foo_bar'.
 
-   _Pragmatics: The core of GDB must be buildable on many platforms
-including DJGPP and MacOS/HFS.  Every time an unfriendly file is
-introduced to the build process both `Makefile.in' and `configure.in'
-need to be modified accordingly.  Compare the convoluted conversion
-process needed to transform `COPYING' into `copying.c' with the
-conversion needed to transform `version.in' into `version.c'._
-
-   Any file non 8.3 compliant file (that is not used when building the
-core of GDB) must be added to `gdb/config/djgpp/fnchange.lst'.
-
-   _Pragmatics: This is clearly a compromise._
-
-   When GDB has a local version of a system header file (ex `string.h')
-the file name based on the POSIX header prefixed with `gdb_'
-(`gdb_string.h').  These headers should be relatively independent: they
-should use only macros defined by `configure', the compiler, or the
-host; they should include only system headers; they should refer only
-to system types.  They may be shared between multiple programs, e.g.
-GDB and GDBSERVER.
-
-   For other files `-' is used as the separator.
-
-16.4.10 Include Files
----------------------
-
-A `.c' file should include `defs.h' first.
-
-   A `.c' file should directly include the `.h' file of every
-declaration and/or definition it directly refers to.  It cannot rely on
-indirect inclusion.
-
-   A `.h' file should directly include the `.h' file of every
-declaration and/or definition it directly refers to.  It cannot rely on
-indirect inclusion.  Exception: The file `defs.h' does not need to be
-directly included.
-
-   An external declaration should only appear in one include file.
-
-   An external declaration should never appear in a `.c' file.
-Exception: a declaration for the `_initialize' function that pacifies
-`-Wmissing-declaration'.
-
-   A `typedef' definition should only appear in one include file.
-
-   An opaque `struct' declaration can appear in multiple `.h' files.
-Where possible, a `.h' file should use an opaque `struct' declaration
-instead of an include.
-
-   All `.h' files should be wrapped in:
-
-     #ifndef INCLUDE_FILE_NAME_H
-     #define INCLUDE_FILE_NAME_H
-     header body
-     #endif
-
-16.4.11 Clean Design and Portable Implementation
-------------------------------------------------
+17.8 Clean Design and Portable Implementation
+=============================================
 
 In addition to getting the syntax right, there's the little question of
 semantics.  Some things are done in certain ways in GDB because long
@@ -5885,9 +5914,9 @@ command.  Do not use `printf' to print trace messages.  Use
 `fprintf_unfiltered(gdb_stdlog, ...'.  Do not use `#ifdef DEBUG'.
 
 
-File: gdbint.info,  Node: Porting GDB,  Next: Versions and Branches,  Prev: Coding,  Up: Top
+File: gdbint.info,  Node: Porting GDB,  Next: Versions and Branches,  Prev: Misc Guidelines,  Up: Top
 
-17 Porting GDB
+18 Porting GDB
 **************
 
 Most of the work in making GDB compile on a new machine is in
@@ -5932,10 +5961,10 @@ architecture to GDB can be broken into a number of steps.
 
 File: gdbint.info,  Node: Versions and Branches,  Next: Start of New Year Procedure,  Prev: Porting GDB,  Up: Top
 
-18 Versions and Branches
+19 Versions and Branches
 ************************
 
-18.1 Versions
+19.1 Versions
 =============
 
 GDB's version is determined by the file `gdb/version.in' and takes one
@@ -6019,7 +6048,7 @@ illustration of a typical sequence:
      6.3.50.20020312-cvs        6.2.90 (draft #1)
              |                          |
 
-18.2 Release Branches
+19.2 Release Branches
 =====================
 
 GDB draws a release series (6.2, 6.2.1, ...) from a single release
@@ -6034,7 +6063,7 @@ is made, both the branchpoint and release tags include the date that
 they are cut (YYYYMMDD) in the tag.  The branch tag, denoting the head
 of the branch, does not need this._
 
-18.3 Vendor Branches
+19.3 Vendor Branches
 ====================
 
 To avoid version conflicts, vendors are expected to modify the file
@@ -6042,10 +6071,10 @@ To avoid version conflicts, vendors are expected to modify the file
 official GDB release never uses alphabetic characters in its version
 identifier).  E.g., `6.2widgit2', or `6.2 (Widgit Inc Patch 2)'.
 
-18.4 Experimental Branches
+19.4 Experimental Branches
 ==========================
 
-18.4.1 Guidelines
+19.4.1 Guidelines
 -----------------
 
 GDB permits the creation of branches, cut from the CVS repository, for
@@ -6091,7 +6120,7 @@ _a branch shall be branded using `version.in'_
      `6.2.50.20030303_owner_name' or `6.2 (Owner Name)'.
 
 
-18.4.2 Tags
+19.4.2 Tags
 -----------
 
 To simplify the identification of GDB branches, the following branch
@@ -6124,7 +6153,7 @@ For further information on CVS, see Concurrent Versions System
 
 File: gdbint.info,  Node: Start of New Year Procedure,  Next: Releasing GDB,  Prev: Versions and Branches,  Up: Top
 
-19 Start of New Year Procedure
+20 Start of New Year Procedure
 ******************************
 
 At the start of each new year, the following actions should be
@@ -6189,10 +6218,10 @@ performed:
 
 File: gdbint.info,  Node: Releasing GDB,  Next: Testsuite,  Prev: Start of New Year Procedure,  Up: Top
 
-20 Releasing GDB
+21 Releasing GDB
 ****************
 
-20.1 Branch Commit Policy
+21.1 Branch Commit Policy
 =========================
 
 The branch commit policy is pretty slack.  GDB releases 5.0, 5.1 and
@@ -6220,7 +6249,7 @@ functionality there is little chance that a broken change will be fatal.
 This means that changes such as adding a new architectures or (within
 reason) support for a new host are considered acceptable._
 
-20.2 Obsoleting code
+21.2 Obsoleting code
 ====================
 
 Before anything else, poke the other developers (and around the source
@@ -6261,7 +6290,7 @@ wrong.  Secondly since it removes any history associated with the file
 (effectively clearing the slate) the developer has a much freer hand
 when it comes to fixing broken files._
 
-20.3 Before the Branch
+21.3 Before the Branch
 ======================
 
 The most important objective at this stage is to find and fix simple
@@ -6302,17 +6331,17 @@ number of errors and coding conventions.  The checks include things
 like using `malloc' instead of `xmalloc' and file naming problems.
 There shouldn't be any regressions.
 
-20.3.1 Review the bug data base
+21.3.1 Review the bug data base
 -------------------------------
 
 Close anything obviously fixed.
 
-20.3.2 Check all cross targets build
+21.3.2 Check all cross targets build
 ------------------------------------
 
 The targets are listed in `gdb/MAINTAINERS'.
 
-20.4 Cut the Branch
+21.4 Cut the Branch
 ===================
 
 Create the branch
@@ -6433,12 +6462,12 @@ list are alerted._
 
    * The branch commit policy still holds.
 
-20.5 Stabilize the branch
+21.5 Stabilize the branch
 =========================
 
 Something goes here.
 
-20.6 Create a Release
+21.6 Create a Release
 =====================
 
 The process of creating and then making available a release is broken
@@ -6448,7 +6477,7 @@ process of releasing that tar ball.
 
    When making a release candidate just the first section is needed.
 
-20.6.1 Create a release candidate
+21.6.1 Create a release candidate
 ---------------------------------
 
 The objective at this stage is to create a set of tar balls that can be
@@ -6617,7 +6646,7 @@ Note:
      can not include it in the compressed file.  This is also why the
      release process runs `tar' and `bzip2' as separate passes.
 
-20.6.2 Sanity check the tar ball
+21.6.2 Sanity check the tar ball
 --------------------------------
 
 Pick a popular machine (Solaris/PPC?) and try the build on that.
@@ -6641,7 +6670,7 @@ Pick a popular machine (Solaris/PPC?) and try the build on that.
      $1 = {argc = 136426532, argv = 0x821b7f0}
      (gdb)
 
-20.6.3 Make a release candidate available
+21.6.3 Make a release candidate available
 -----------------------------------------
 
 If this is a release candidate then the only remaining steps are:
@@ -6657,7 +6686,7 @@ If this is a release candidate then the only remaining steps are:
   4. Notify the relevant mailing lists ( <gdb@sourceware.org> and
      <gdb-testers@sourceware.org> that the candidate is available.
 
-20.6.4 Make a formal release available
+21.6.4 Make a formal release available
 --------------------------------------
 
 (And you thought all that was required was to post an e-mail.)
@@ -6750,7 +6779,7 @@ Post the `ANNOUNCEMENT' file you created above to:
 
    * GDB Bug Report mailing list <bug-gdb@gnu.org>
 
-20.6.5 Cleanup
+21.6.5 Cleanup
 --------------
 
 The release is out but you're still not finished.
@@ -6818,7 +6847,7 @@ of the most recent release.
 
    Also update the schedule `cronjob'.
 
-20.7 Post release
+21.7 Post release
 =================
 
 Remove any `OBSOLETE' code.
@@ -6826,7 +6855,7 @@ Remove any `OBSOLETE' code.
 
 File: gdbint.info,  Node: Testsuite,  Next: Hints,  Prev: Releasing GDB,  Up: Top
 
-21 Testsuite
+22 Testsuite
 ************
 
 The testsuite is an important component of the GDB package.  While it
@@ -6839,7 +6868,7 @@ cause a significant regression that went unnoticed for some time.
 themselves are calls to various `Tcl' procs; the framework runs all the
 procs and summarizes the passes and fails.
 
-21.1 Using the Testsuite
+22.1 Using the Testsuite
 ========================
 
 To run the testsuite, simply go to the GDB object directory (or to the
@@ -6909,7 +6938,7 @@ give a result of "UNRESOLVED", like this:
 
      UNRESOLVED: gdb.base/example.exp: This test script does not work on a remote host.
 
-21.2 Testsuite Parameters
+22.2 Testsuite Parameters
 =========================
 
 Several variables exist to modify the behavior of the testsuite.
@@ -6987,7 +7016,7 @@ DejaGnu `runtest' command directly.
      make site.exp
      runtest TRANSCRIPT=y
 
-21.3 Testsuite Configuration
+22.3 Testsuite Configuration
 ============================
 
 It is possible to adjust the behavior of the testsuite by defining the
@@ -7015,7 +7044,7 @@ board file.
      test suite(1).
 
 
-21.4 Testsuite Organization
+22.4 Testsuite Organization
 ===========================
 
 The testsuite is entirely contained in `gdb/testsuite'.  While the
@@ -7067,7 +7096,7 @@ intelligibility.
      instance, `gdb.disasm' exercises various disassemblers, while
      `gdb.stabs' tests pathways through the stabs symbol reader.
 
-21.5 Writing Tests
+22.5 Writing Tests
 ==================
 
 In many areas, the GDB tests are already quite comprehensive; you
@@ -7103,7 +7132,7 @@ default; search the board file for "timeout".
 
 File: gdbint.info,  Node: Hints,  Next: GDB Observers,  Prev: Testsuite,  Up: Top
 
-22 Hints
+23 Hints
 ********
 
 Check the `README' file, it often has useful information that does not
@@ -7115,9 +7144,9 @@ appear anywhere else in the directory.
 * Debugging GDB::		Debugging GDB with itself
 
 
-File: gdbint.info,  Node: Getting Started,  Up: Hints
+File: gdbint.info,  Node: Getting Started,  Next: Debugging GDB,  Up: Hints
 
-22.1 Getting Started
+23.1 Getting Started
 ====================
 
 GDB is a large and complicated program, and if you first starting to
@@ -7193,9 +7222,9 @@ GDB"--if we had some magic secret we would put it in this manual.
 Suggestions for improving the manual are always welcome, of course.
 
 
-File: gdbint.info,  Node: Debugging GDB,  Up: Hints
+File: gdbint.info,  Node: Debugging GDB,  Prev: Getting Started,  Up: Hints
 
-22.2 Debugging GDB with itself
+23.2 Debugging GDB with itself
 ==============================
 
 If GDB is limping on your machine, this is the preferred way to get it
@@ -7219,7 +7248,7 @@ routines for your local machine where they will be accessed first by
    Also, make sure that you've either compiled GDB with your local cc,
 or have run `fixincludes' if you are compiling with gcc.
 
-22.3 Submitting Patches
+23.3 Submitting Patches
 =======================
 
 Thanks for thinking of offering your changes back to the community of
@@ -7283,7 +7312,7 @@ be for quite some time.
    Please send patches directly to the GDB maintainers
 <gdb-patches@sourceware.org>.
 
-22.4 Build Script
+23.4 Build Script
 =================
 
 The script `gdb_buildall.sh' builds GDB with flag
@@ -7464,12 +7493,20 @@ emitted.
      The thread's ptid has changed.  The OLD_PTID parameter specifies
      the old value, and NEW_PTID specifies the new value.
 
- -- Function: void inferior_appeared (int PID)
-     GDB has attached to a new inferior identified by PID.
+ -- Function: void inferior_added (struct inferior *INF)
+     The inferior INF has been added to the list of inferiors.  At this
+     point, it might not be associated with any process.
 
- -- Function: void inferior_exit (int PID)
-     Either GDB detached from the inferior, or the inferior exited.
-     The argument PID identifies the inferior.
+ -- Function: void inferior_appeared (struct inferior *INF)
+     The inferior identified by INF has been attached to a process.
+
+ -- Function: void inferior_exit (struct inferior *INF)
+     Either the inferior associated with INF has been detached from the
+     process, or the process has exited.
+
+ -- Function: void inferior_removed (struct inferior *INF)
+     The inferior INF has been removed from the list of inferiors.
+     This method is called immediately before freeing INF.
 
  -- Function: void memory_changed (CORE_ADDR ADDR, int LEN, const
           bfd_byte *DATA)
@@ -7486,10 +7523,10 @@ File: gdbint.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: G
 Appendix B GNU Free Documentation License
 *****************************************
 
-                      Version 1.2, November 2002
+                     Version 1.3, 3 November 2008
 
-     Copyright (C) 2000,2001,2002 Free Software Foundation, Inc.
-     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+     Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+     `http://fsf.org/'
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -7590,6 +7627,9 @@ Appendix B GNU Free Documentation License
      works in formats which do not have any title page as such, "Title
      Page" means the text near the most prominent appearance of the
      work's title, preceding the beginning of the body of the text.
+
+     The "publisher" means any person or entity that distributes copies
+     of the Document to the public.
 
      A section "Entitled XYZ" means a named subunit of the Document
      whose title either is precisely XYZ or contains XYZ in parentheses
@@ -7856,12 +7896,29 @@ Appendix B GNU Free Documentation License
   9. TERMINATION
 
      You may not copy, modify, sublicense, or distribute the Document
-     except as expressly provided for under this License.  Any other
-     attempt to copy, modify, sublicense or distribute the Document is
-     void, and will automatically terminate your rights under this
-     License.  However, parties who have received copies, or rights,
-     from you under this License will not have their licenses
-     terminated so long as such parties remain in full compliance.
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense, or distribute it is void,
+     and will automatically terminate your rights under this License.
+
+     However, if you cease all violation of this License, then your
+     license from a particular copyright holder is reinstated (a)
+     provisionally, unless and until the copyright holder explicitly
+     and finally terminates your license, and (b) permanently, if the
+     copyright holder fails to notify you of the violation by some
+     reasonable means prior to 60 days after the cessation.
+
+     Moreover, your license from a particular copyright holder is
+     reinstated permanently if the copyright holder notifies you of the
+     violation by some reasonable means, this is the first time you have
+     received notice of violation of this License (for any work) from
+     that copyright holder, and you cure the violation prior to 30 days
+     after your receipt of the notice.
+
+     Termination of your rights under this section does not terminate
+     the licenses of parties who have received copies or rights from
+     you under this License.  If your rights have been terminated and
+     not permanently reinstated, receipt of a copy of some or all of
+     the same material does not give you any rights to use it.
 
  10. FUTURE REVISIONS OF THIS LICENSE
 
@@ -7879,10 +7936,44 @@ Appendix B GNU Free Documentation License
      published (not as a draft) by the Free Software Foundation.  If
      the Document does not specify a version number of this License,
      you may choose any version ever published (not as a draft) by the
-     Free Software Foundation.
+     Free Software Foundation.  If the Document specifies that a proxy
+     can decide which future versions of this License can be used, that
+     proxy's public statement of acceptance of a version permanently
+     authorizes you to choose that version for the Document.
 
-B.1 ADDENDUM: How to use this License for your documents
-========================================================
+ 11. RELICENSING
+
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+     World Wide Web server that publishes copyrightable works and also
+     provides prominent facilities for anybody to edit those works.  A
+     public wiki that anybody can edit is an example of such a server.
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
+     site means any set of copyrightable works thus published on the MMC
+     site.
+
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
+     license published by Creative Commons Corporation, a not-for-profit
+     corporation with a principal place of business in San Francisco,
+     California, as well as future copyleft versions of that license
+     published by that same organization.
+
+     "Incorporate" means to publish or republish a Document, in whole or
+     in part, as part of another Document.
+
+     An MMC is "eligible for relicensing" if it is licensed under this
+     License, and if all works that were first published under this
+     License somewhere other than this MMC, and subsequently
+     incorporated in whole or in part into the MMC, (1) had no cover
+     texts or invariant sections, and (2) were thus incorporated prior
+     to November 1, 2008.
+
+     The operator of an MMC Site may republish an MMC contained in the
+     site under CC-BY-SA on the same site at any time before August 1,
+     2009, provided the MMC is eligible for relicensing.
+
+
+ADDENDUM: How to use this License for your documents
+====================================================
 
 To use this License in a document you have written, include a copy of
 the License in the document and put the following copyright and license
@@ -7890,7 +7981,7 @@ notices just after the title page:
 
        Copyright (C)  YEAR  YOUR NAME.
        Permission is granted to copy, distribute and/or modify this document
-       under the terms of the GNU Free Documentation License, Version 1.2
+       under the terms of the GNU Free Documentation License, Version 1.3
        or any later version published by the Free Software Foundation;
        with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
        Texts.  A copy of the license is included in the section entitled ``GNU
@@ -7933,7 +8024,7 @@ Index
 * _initialize_ARCH_tdep:                 How an Architecture is Represented.
                                                               (line  13)
 * _initialize_language:                  Language Support.    (line  79)
-* a.out format:                          Symbol Handling.     (line 213)
+* a.out format:                          Symbol Handling.     (line 218)
 * about_to_proceed:                      GDB Observers.       (line 133)
 * abstract interpretation of function prologues: Algorithms.  (line  48)
 * add_cmd:                               User Interface.      (line  21)
@@ -7944,7 +8035,7 @@ Index
 * adding a new host:                     Host Definition.     (line  13)
 * adding a symbol-reading module:        Symbol Handling.     (line  37)
 * adding a target:                       Adding a New Target. (line   6)
-* adding debugging info reader:          Symbol Handling.     (line 360)
+* adding debugging info reader:          Symbol Handling.     (line 365)
 * adding source language:                Language Support.    (line  17)
 * address classes:                       Address Classes.     (line   6)
 * address representation:                Pointers and Addresses.
@@ -7967,8 +8058,7 @@ Index
                                                               (line   6)
 * architecture_changed:                  GDB Observers.       (line 160)
 * Array Containers:                      Support Libraries.   (line 131)
-* assumptions about targets:             Coding.              (line 514)
-* ATTR_NORETURN:                         Host Definition.     (line 126)
+* assumptions about targets:             Misc Guidelines.     (line 334)
 * base of a frame:                       Frame Handling Terminology.
                                                               (line  28)
 * BFD library:                           Support Libraries.   (line   9)
@@ -7988,26 +8078,25 @@ Index
 * breakpoints:                           Algorithms.          (line 151)
 * bug-gdb mailing list:                  Getting Started.     (line  72)
 * build script:                          Debugging GDB.       (line  94)
-* C data types:                          Coding.              (line 389)
+* C data types:                          Coding Standards.    (line 105)
 * call frame information:                Algorithms.          (line  14)
 * call stack frame:                      Stack Frames.        (line   6)
 * calls to the inferior:                 Inferior Call Setup. (line   6)
-* CANNOT_STEP_HW_WATCHPOINTS:            Algorithms.          (line 408)
 * CC_HAS_LONG_LONG:                      Host Definition.     (line 105)
 * CFI (call frame information):          Algorithms.          (line  14)
-* checkpoints:                           Algorithms.          (line 604)
-* cleanups:                              Coding.              (line  12)
+* checkpoints:                           Algorithms.          (line 600)
+* cleanups:                              Misc Guidelines.     (line  12)
 * CLI:                                   User Interface.      (line  12)
 * code pointers, word-addressed:         Pointers and Addresses.
                                                               (line   6)
-* coding standards:                      Coding.              (line 215)
-* COFF debugging info:                   Symbol Handling.     (line 310)
-* COFF format:                           Symbol Handling.     (line 228)
+* coding standards:                      Coding Standards.    (line   6)
+* COFF debugging info:                   Symbol Handling.     (line 315)
+* COFF format:                           Symbol Handling.     (line 233)
 * command implementation:                Getting Started.     (line  60)
 * command interpreter:                   User Interface.      (line  12)
-* comment formatting:                    Coding.              (line 363)
-* compiler warnings:                     Coding.              (line 271)
-* Compressed DWARF 2 debugging info:     Symbol Handling.     (line 330)
+* comment formatting:                    Coding Standards.    (line  79)
+* compiler warnings:                     Misc Guidelines.     (line 252)
+* Compressed DWARF 2 debugging info:     Symbol Handling.     (line 335)
 * computed values:                       Values.              (line  35)
 * configure.tgt:                         How an Architecture is Represented.
                                                               (line  19)
@@ -8028,29 +8117,29 @@ Index
 * D10V addresses:                        Pointers and Addresses.
                                                               (line   6)
 * data output:                           User Interface.      (line 254)
-* data-pointer, per-architecture/per-module: Coding.          (line 100)
+* data-pointer, per-architecture/per-module: Misc Guidelines. (line 100)
 * debugging GDB:                         Debugging GDB.       (line   6)
 * DEFAULT_PROMPT:                        Host Definition.     (line  93)
 * deprecate_cmd:                         User Interface.      (line  32)
 * DEPRECATED_IBM6000_TARGET:             Defining Other Architecture Features.
                                                               (line 242)
 * deprecating commands:                  User Interface.      (line  32)
-* design:                                Coding.              (line 509)
+* design:                                Misc Guidelines.     (line 329)
 * DEV_TTY:                               Host Definition.     (line  96)
-* DIRNAME_SEPARATOR:                     Coding.              (line 579)
+* DIRNAME_SEPARATOR:                     Misc Guidelines.     (line 399)
 * DISABLE_UNSETTABLE_BREAK:              Defining Other Architecture Features.
                                                               (line 211)
-* discard_cleanups:                      Coding.              (line  39)
-* do_cleanups:                           Coding.              (line  35)
+* discard_cleanups:                      Misc Guidelines.     (line  39)
+* do_cleanups:                           Misc Guidelines.     (line  35)
 * DOS text files:                        Host Definition.     (line  87)
 * dummy frames:                          About Dummy Frames.  (line   6)
 * DW_AT_address_class:                   Address Classes.     (line   6)
 * DW_AT_byte_size:                       Address Classes.     (line   6)
-* DWARF 2 debugging info:                Symbol Handling.     (line 323)
-* DWARF 3 debugging info:                Symbol Handling.     (line 350)
-* ECOFF debugging info:                  Symbol Handling.     (line 316)
-* ECOFF format:                          Symbol Handling.     (line 243)
-* ELF format:                            Symbol Handling.     (line 276)
+* DWARF 2 debugging info:                Symbol Handling.     (line 328)
+* DWARF 3 debugging info:                Symbol Handling.     (line 355)
+* ECOFF debugging info:                  Symbol Handling.     (line 321)
+* ECOFF format:                          Symbol Handling.     (line 248)
+* ELF format:                            Symbol Handling.     (line 281)
 * evaluate_subexp:                       Language Support.    (line  58)
 * executable_changed:                    GDB Observers.       (line  85)
 * execution state:                       Managing Execution State.
@@ -8061,11 +8150,9 @@ Index
 * expression parser:                     Language Support.    (line  21)
 * extract_typed_address:                 Pointers and Addresses.
                                                               (line  52)
-* FDL, GNU Free Documentation License:   GNU Free Documentation License.
-                                                              (line   6)
 * field output functions:                User Interface.      (line 254)
-* file names, portability:               Coding.              (line 547)
-* FILENAME_CMP:                          Coding.              (line 573)
+* file names, portability:               Misc Guidelines.     (line 367)
+* FILENAME_CMP:                          Misc Guidelines.     (line 393)
 * find_pc_function:                      Symbol Handling.     (line 136)
 * find_pc_line:                          Symbol Handling.     (line 136)
 * find_sym_fns:                          Symbol Handling.     (line  32)
@@ -8123,9 +8210,9 @@ Index
 * frame_unwind_prepend_unwinder:         Stack Frames.        (line  30)
 * full symbol table:                     Symbol Handling.     (line 104)
 * function prologue:                     Prologue Caches.     (line   6)
-* function prototypes:                   Coding.              (line 411)
-* function usage:                        Coding.              (line 393)
-* fundamental types:                     Symbol Handling.     (line 178)
+* function prototypes:                   Coding Standards.    (line 127)
+* function usage:                        Coding Standards.    (line 109)
+* fundamental types:                     Symbol Handling.     (line 183)
 * GCC2_COMPILED_FLAG_SYMBOL:             Defining Other Architecture Features.
                                                               (line 225)
 * GCC_COMPILED_FLAG_SYMBOL:              Defining Other Architecture Features.
@@ -8223,9 +8310,9 @@ Index
                                                               (line 195)
 * gdbarch_convert_register_p:            Register and Memory Data.
                                                               (line  30)
-* gdbarch_data:                          Coding.              (line 133)
-* gdbarch_data_register_post_init:       Coding.              (line 118)
-* gdbarch_data_register_pre_init:        Coding.              (line 108)
+* gdbarch_data:                          Misc Guidelines.     (line 133)
+* gdbarch_data_register_post_init:       Misc Guidelines.     (line 118)
+* gdbarch_data_register_pre_init:        Misc Guidelines.     (line 108)
 * gdbarch_decr_pc_after_break:           Defining Other Architecture Features.
                                                               (line 205)
 * gdbarch_deprecated_fp_regnum:          Defining Other Architecture Features.
@@ -8330,28 +8417,30 @@ Index
 * hardware breakpoints:                  Algorithms.          (line 158)
 * hardware watchpoints:                  Algorithms.          (line 280)
 * HAVE_CONTINUABLE_WATCHPOINT:           Algorithms.          (line 402)
-* HAVE_DOS_BASED_FILE_SYSTEM:            Coding.              (line 556)
+* HAVE_DOS_BASED_FILE_SYSTEM:            Misc Guidelines.     (line 376)
 * HAVE_STEPPABLE_WATCHPOINT:             Algorithms.          (line 386)
 * host:                                  Overall Structure.   (line  50)
 * host, adding:                          Host Definition.     (line  13)
-* i386_cleanup_dregs:                    Algorithms.          (line 580)
-* I386_DR_LOW_GET_STATUS:                Algorithms.          (line 493)
-* I386_DR_LOW_RESET_ADDR:                Algorithms.          (line 489)
-* I386_DR_LOW_SET_ADDR:                  Algorithms.          (line 486)
-* I386_DR_LOW_SET_CONTROL:               Algorithms.          (line 483)
-* i386_insert_hw_breakpoint:             Algorithms.          (line 568)
-* i386_insert_watchpoint:                Algorithms.          (line 540)
-* i386_region_ok_for_watchpoint:         Algorithms.          (line 518)
-* i386_remove_hw_breakpoint:             Algorithms.          (line 568)
-* i386_remove_watchpoint:                Algorithms.          (line 540)
-* i386_stopped_by_watchpoint:            Algorithms.          (line 532)
-* i386_stopped_data_address:             Algorithms.          (line 525)
-* I386_USE_GENERIC_WATCHPOINTS:          Algorithms.          (line 465)
+* i386_cleanup_dregs:                    Algorithms.          (line 576)
+* I386_DR_LOW_GET_STATUS:                Algorithms.          (line 489)
+* I386_DR_LOW_RESET_ADDR:                Algorithms.          (line 485)
+* I386_DR_LOW_SET_ADDR:                  Algorithms.          (line 482)
+* I386_DR_LOW_SET_CONTROL:               Algorithms.          (line 479)
+* i386_insert_hw_breakpoint:             Algorithms.          (line 564)
+* i386_insert_watchpoint:                Algorithms.          (line 536)
+* i386_region_ok_for_watchpoint:         Algorithms.          (line 514)
+* i386_remove_hw_breakpoint:             Algorithms.          (line 564)
+* i386_remove_watchpoint:                Algorithms.          (line 536)
+* i386_stopped_by_watchpoint:            Algorithms.          (line 528)
+* i386_stopped_data_address:             Algorithms.          (line 521)
+* I386_USE_GENERIC_WATCHPOINTS:          Algorithms.          (line 461)
 * in_dynsym_resolve_code:                Defining Other Architecture Features.
                                                               (line 263)
-* inferior_appeared:                     GDB Observers.       (line 169)
+* inferior_added:                        GDB Observers.       (line 169)
+* inferior_appeared:                     GDB Observers.       (line 173)
 * inferior_created:                      GDB Observers.       (line  92)
-* inferior_exit:                         GDB Observers.       (line 172)
+* inferior_exit:                         GDB Observers.       (line 176)
+* inferior_removed:                      GDB Observers.       (line 180)
 * inner_than:                            Functions and Variable to Analyze Frames.
                                                               (line  30)
 * innermost frame:                       Frame Handling Terminology.
@@ -8359,8 +8448,8 @@ Index
 * insert or remove hardware breakpoint:  Algorithms.          (line 234)
 * insert or remove hardware watchpoint:  Algorithms.          (line 347)
 * insert or remove software breakpoint:  Algorithms.          (line 211)
-* IS_ABSOLUTE_PATH:                      Coding.              (line 567)
-* IS_DIR_SEPARATOR:                      Coding.              (line 562)
+* IS_ABSOLUTE_PATH:                      Misc Guidelines.     (line 387)
+* IS_DIR_SEPARATOR:                      Misc Guidelines.     (line 382)
 * ISATTY:                                Host Definition.     (line  99)
 * item output functions:                 User Interface.      (line 254)
 * language parser:                       Language Support.    (line  25)
@@ -8369,8 +8458,8 @@ Index
 * length_of_subexp:                      Language Support.    (line  58)
 * libgdb:                                libgdb.              (line   9)
 * libiberty library:                     Support Libraries.   (line  52)
-* line wrap in output:                   Coding.              (line 191)
-* lint:                                  Host Definition.     (line 133)
+* line wrap in output:                   Misc Guidelines.     (line 191)
+* lint:                                  Host Definition.     (line 119)
 * list output functions:                 User Interface.      (line 131)
 * LITTLE_BREAKPOINT:                     Defining Other Architecture Features.
                                                               (line 100)
@@ -8379,16 +8468,16 @@ Index
 * lookup_symbol:                         Symbol Handling.     (line 142)
 * LSEEK_NOT_LINEAR:                      Host Definition.     (line 114)
 * lval_type enumeration, for values.:    Values.              (line  19)
-* make_cleanup:                          Coding.              (line  28)
+* make_cleanup:                          Misc Guidelines.     (line  28)
 * make_cleanup_ui_out_list_begin_end:    User Interface.      (line 247)
 * make_cleanup_ui_out_tuple_begin_end:   User Interface.      (line 223)
 * making a new release of gdb:           Releasing GDB.       (line   6)
 * memory representation:                 Register and Memory Data.
                                                               (line   6)
-* memory_changed:                        GDB Observers.       (line 177)
+* memory_changed:                        GDB Observers.       (line 185)
 * minimal symbol table:                  Symbol Handling.     (line 111)
 * minsymtabs:                            Symbol Handling.     (line 111)
-* multi-arch data:                       Coding.              (line 100)
+* multi-arch data:                       Misc Guidelines.     (line 100)
 * NATDEPFILES:                           Native Debugging.    (line   8)
 * native conditionals:                   Native Debugging.    (line  75)
 * native debugging:                      Native Debugging.    (line   6)
@@ -8399,13 +8488,12 @@ Index
 * new_thread:                            GDB Observers.       (line 114)
 * NEXT frame:                            Frame Handling Terminology.
                                                               (line  11)
-* NORETURN:                              Host Definition.     (line 119)
 * normal_stop:                           GDB Observers.       (line  76)
 * normal_stop observer:                  GDB Observers.       (line  48)
 * notification about inferior execution stop: GDB Observers.  (line  48)
-* notifications about changes in internals: Algorithms.       (line 634)
-* object file formats:                   Symbol Handling.     (line 210)
-* observer pattern interface:            Algorithms.          (line 634)
+* notifications about changes in internals: Algorithms.       (line 630)
+* object file formats:                   Symbol Handling.     (line 215)
+* observer pattern interface:            Algorithms.          (line 630)
 * observers implementation rationale:    GDB Observers.       (line   9)
 * obstacks:                              Support Libraries.   (line  69)
 * op_print_tab:                          Language Support.    (line  91)
@@ -8416,12 +8504,12 @@ Index
 * partial symbol table:                  Symbol Handling.     (line 114)
 * pc_regnum:                             Register Architecture Functions & Variables.
                                                               (line  58)
-* PE-COFF format:                        Symbol Handling.     (line 267)
-* per-architecture module data:          Coding.              (line 100)
+* PE-COFF format:                        Symbol Handling.     (line 272)
+* per-architecture module data:          Misc Guidelines.     (line 100)
 * pointer representation:                Pointers and Addresses.
                                                               (line   6)
-* portability:                           Coding.              (line 530)
-* portable file name handling:           Coding.              (line 547)
+* portability:                           Misc Guidelines.     (line 350)
+* portable file name handling:           Misc Guidelines.     (line 367)
 * porting to new machines:               Porting GDB.         (line   6)
 * prefixify_subexp:                      Language Support.    (line  58)
 * PREVIOUS frame:                        Frame Handling Terminology.
@@ -8498,7 +8586,7 @@ Index
 * representations, register and memory:  Register and Memory Data.
                                                               (line   6)
 * requirements for GDB:                  Requirements.        (line   6)
-* restart:                               Algorithms.          (line 604)
+* restart:                               Algorithms.          (line 600)
 * running the test suite:                Testsuite.           (line  19)
 * secondary symbol file:                 Symbol Handling.     (line  47)
 * sentinel frame <1>:                    Frame Handling Terminology.
@@ -8520,7 +8608,7 @@ Index
                                                               (line  12)
 * SKIP_SOLIB_RESOLVER:                   Defining Other Architecture Features.
                                                               (line 267)
-* SLASH_STRING:                          Coding.              (line 584)
+* SLASH_STRING:                          Misc Guidelines.     (line 404)
 * sniffing:                              Frame Handling Terminology.
                                                               (line  46)
 * software breakpoints:                  Algorithms.          (line 184)
@@ -8533,14 +8621,14 @@ Index
 * SOLIB_CREATE_INFERIOR_HOOK:            Native Debugging.    (line  92)
 * solib_loaded:                          GDB Observers.       (line  99)
 * solib_unloaded:                        GDB Observers.       (line 104)
-* SOM debugging info:                    Symbol Handling.     (line 355)
-* SOM format:                            Symbol Handling.     (line 286)
-* source code formatting:                Coding.              (line 323)
+* SOM debugging info:                    Symbol Handling.     (line 360)
+* SOM format:                            Symbol Handling.     (line 291)
+* source code formatting:                Coding Standards.    (line  28)
 * sp_regnum:                             Register Architecture Functions & Variables.
                                                               (line  49)
 * spaces, separate data and code address: Pointers and Addresses.
                                                               (line   6)
-* stabs debugging info:                  Symbol Handling.     (line 300)
+* stabs debugging info:                  Symbol Handling.     (line 305)
 * stack frame, definition of base of a frame: Frame Handling Terminology.
                                                               (line  28)
 * stack frame, definition of innermost frame: Frame Handling Terminology.
@@ -8562,7 +8650,7 @@ Index
 * START_INFERIOR_TRAPS_EXPECTED:         Native Debugging.    (line  96)
 * status register:                       Register Architecture Functions & Variables.
                                                               (line  69)
-* STOPPED_BY_WATCHPOINT:                 Algorithms.          (line 412)
+* STOPPED_BY_WATCHPOINT:                 Algorithms.          (line 408)
 * store_typed_address:                   Pointers and Addresses.
                                                               (line  70)
 * struct:                                GDB Observers.       (line  62)
@@ -8579,7 +8667,7 @@ Index
 * SYMBOL_RELOADING_DEFAULT:              Defining Other Architecture Features.
                                                               (line 454)
 * symtabs:                               Symbol Handling.     (line 104)
-* system dependencies:                   Coding.              (line 534)
+* system dependencies:                   Misc Guidelines.     (line 354)
 * table output functions:                User Interface.      (line 131)
 * target:                                Overall Structure.   (line  50)
 * target architecture definition:        Target Architecture Definition.
@@ -8611,7 +8699,7 @@ Index
 * terminal device:                       Host Definition.     (line  97)
 * test suite:                            Testsuite.           (line   6)
 * test suite organization:               Testsuite.           (line 195)
-* test_notification:                     GDB Observers.       (line 181)
+* test_notification:                     GDB Observers.       (line 189)
 * Testsuite Configuration:               Testsuite.           (line 167)
 * THIS frame:                            Frame Handling Terminology.
                                                               (line   9)
@@ -8622,8 +8710,8 @@ Index
 * tracepoint_deleted:                    GDB Observers.       (line 152)
 * tracepoint_modified:                   GDB Observers.       (line 156)
 * tuple output functions:                User Interface.      (line 131)
-* type codes:                            Symbol Handling.     (line 186)
-* types:                                 Coding.              (line 405)
+* type codes:                            Symbol Handling.     (line 191)
+* types:                                 Coding Standards.    (line 121)
 * ui_out functions:                      User Interface.      (line  47)
 * ui_out functions, usage examples:      User Interface.      (line 398)
 * ui_out_field_core_addr:                User Interface.      (line 287)
@@ -8668,99 +8756,100 @@ Index
 * vendor branches:                       Versions and Branches.
                                                               (line 108)
 * void:                                  GDB Observers.       (line  67)
-* volatile:                              Host Definition.     (line 136)
+* volatile:                              Host Definition.     (line 122)
 * watchpoints:                           Algorithms.          (line 274)
-* watchpoints, on x86:                   Algorithms.          (line 453)
-* watchpoints, with threads:             Algorithms.          (line 429)
+* watchpoints, on x86:                   Algorithms.          (line 449)
+* watchpoints, with threads:             Algorithms.          (line 425)
 * word-addressed machines:               Pointers and Addresses.
                                                               (line   6)
-* wrap_here:                             Coding.              (line 191)
+* wrap_here:                             Misc Guidelines.     (line 191)
 * write_pc:                              Register Architecture Functions & Variables.
                                                               (line  13)
 * writing tests:                         Testsuite.           (line 247)
-* x86 debug registers:                   Algorithms.          (line 453)
-* XCOFF format:                          Symbol Handling.     (line 251)
+* x86 debug registers:                   Algorithms.          (line 449)
+* XCOFF format:                          Symbol Handling.     (line 256)
 
 
 
 Tag Table:
-Node: Top1589
-Node: Summary2470
-Node: Requirements2620
-Node: Contributors4099
-Node: Overall Structure5692
-Node: Algorithms10715
-Node: User Interface42299
-Ref: UI-Independent Output44154
-Ref: User Interface-Footnote-166125
-Ref: User Interface-Footnote-266174
-Node: libgdb66409
-Node: Values70360
-Node: Stack Frames73204
-Node: Symbol Handling78186
-Node: Language Support94720
-Node: Host Definition99446
-Node: Target Architecture Definition104437
-Node: OS ABI Variant Handling105257
-Node: Initialize New Architecture110102
-Node: How an Architecture is Represented110453
-Node: Looking Up an Existing Architecture112410
-Node: Creating a New Architecture115329
-Node: Registers and Memory117367
-Node: Pointers and Addresses118159
-Ref: Pointers and Addresses-Footnote-1124160
-Node: Address Classes124403
-Node: Register Representation127648
-Node: Raw and Cooked Registers128022
-Node: Register Architecture Functions & Variables129206
-Node: Register Information Functions132815
-Ref: Register Information Functions-Footnote-1138721
-Node: Register and Memory Data139140
-Node: Register Caching142289
-Node: Frame Interpretation143825
-Node: All About Stack Frames144231
-Ref: All About Stack Frames-Footnote-1149523
-Node: Frame Handling Terminology149755
-Node: Prologue Caches152282
-Node: Functions and Variable to Analyze Frames153963
-Ref: frame_align156061
-Node: Functions to Access Frame Data157575
-Node: Analyzing Stacks---Frame Sniffers159866
-Ref: Analyzing Stacks---Frame Sniffers-Footnote-1164516
-Node: Inferior Call Setup165013
-Node: About Dummy Frames165296
-Node: Functions Creating Dummy Frames165922
-Node: Adding support for debugging core files169979
-Node: Defining Other Architecture Features170523
-Ref: gdbarch_breakpoint_from_pc175370
-Ref: gdbarch_stabs_argument_has_addr187764
-Ref: gdbarch_push_dummy_call188011
-Ref: gdbarch_push_dummy_code188571
-Ref: gdbarch_return_value189553
-Ref: gdbarch_dummy_id195319
-Node: Adding a New Target196007
-Node: Target Descriptions198474
-Node: Target Descriptions Implementation199413
-Node: Adding Target Described Register Support200787
-Node: Target Vector Definition203733
-Node: Managing Execution State204265
-Node: Existing Targets206078
-Node: Native Debugging208593
-Node: Support Libraries212421
-Node: Coding223936
-Node: Porting GDB248945
-Node: Versions and Branches250814
-Ref: Tags256770
-Ref: experimental branch tags257101
-Node: Start of New Year Procedure257833
-Node: Releasing GDB259639
-Node: Testsuite277871
-Ref: Testsuite-Footnote-1289736
-Node: Hints289854
-Node: Getting Started290176
-Node: Debugging GDB294319
-Node: GDB Observers299384
-Node: GNU Free Documentation License307286
-Node: Index329730
+Node: Top1602
+Node: Summary2513
+Node: Requirements2663
+Node: Contributors4142
+Node: Overall Structure5735
+Node: Algorithms10758
+Node: User Interface42200
+Ref: UI-Independent Output44055
+Ref: User Interface-Footnote-166045
+Ref: User Interface-Footnote-266094
+Node: libgdb66329
+Node: Values70280
+Node: Stack Frames73124
+Node: Symbol Handling78106
+Node: Language Support94911
+Node: Host Definition99637
+Node: Target Architecture Definition103996
+Node: OS ABI Variant Handling104816
+Node: Initialize New Architecture109661
+Node: How an Architecture is Represented110012
+Node: Looking Up an Existing Architecture111969
+Node: Creating a New Architecture114888
+Node: Registers and Memory116926
+Node: Pointers and Addresses117718
+Ref: Pointers and Addresses-Footnote-1123719
+Node: Address Classes123962
+Node: Register Representation127207
+Node: Raw and Cooked Registers127581
+Node: Register Architecture Functions & Variables128765
+Node: Register Information Functions132374
+Ref: Register Information Functions-Footnote-1138280
+Node: Register and Memory Data138699
+Node: Register Caching141848
+Node: Frame Interpretation143384
+Node: All About Stack Frames143790
+Ref: All About Stack Frames-Footnote-1149082
+Node: Frame Handling Terminology149314
+Node: Prologue Caches151841
+Node: Functions and Variable to Analyze Frames153522
+Ref: frame_align155620
+Node: Functions to Access Frame Data157134
+Node: Analyzing Stacks---Frame Sniffers159425
+Ref: Analyzing Stacks---Frame Sniffers-Footnote-1164075
+Node: Inferior Call Setup164572
+Node: About Dummy Frames164855
+Node: Functions Creating Dummy Frames165481
+Node: Adding support for debugging core files169538
+Node: Defining Other Architecture Features170082
+Ref: gdbarch_breakpoint_from_pc174929
+Ref: gdbarch_stabs_argument_has_addr187323
+Ref: gdbarch_push_dummy_call187570
+Ref: gdbarch_push_dummy_code188130
+Ref: gdbarch_return_value189112
+Ref: gdbarch_dummy_id194878
+Node: Adding a New Target195566
+Node: Target Descriptions198033
+Node: Target Descriptions Implementation198972
+Node: Adding Target Described Register Support200346
+Node: Target Vector Definition203292
+Node: Managing Execution State203824
+Node: Existing Targets205637
+Node: Native Debugging208152
+Node: Support Libraries211980
+Node: Coding Standards223505
+Node: Misc Guidelines231385
+Node: Porting GDB249748
+Node: Versions and Branches251626
+Ref: Tags257582
+Ref: experimental branch tags257913
+Node: Start of New Year Procedure258645
+Node: Releasing GDB260451
+Node: Testsuite278683
+Ref: Testsuite-Footnote-1290548
+Node: Hints290666
+Node: Getting Started290988
+Node: Debugging GDB295153
+Node: GDB Observers300242
+Node: GNU Free Documentation License308550
+Node: Index333717
 
 End Tag Table
